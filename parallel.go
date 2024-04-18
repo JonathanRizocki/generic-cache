@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -18,9 +19,33 @@ func main() {
 	for i := 0; i < 3; i++ {
 
 		go printEverySecond("Hello" + strconv.Itoa(i+4))
-		go printEverySecond(string("world" + strconv.Itoa(i+11)))
+		go printEverySecond("world" + strconv.Itoa(i+11))
 	}
 
 	var input string
 	fmt.Scanln(&input)
+
+	cookRecipe()
+}
+
+func cookRecipe() {
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+
+	go cookRice(wg)
+	go cookCurry(wg)
+
+	wg.Wait()
+}
+
+func cookRice(wg *sync.WaitGroup) {
+	defer wg.Done()
+	fmt.Println("Cooking rice...")
+	// prep rice
+}
+
+func cookCurry(wg *sync.WaitGroup) {
+	defer wg.Done()
+	fmt.Println("Cooking curry...")
+	// prep curry
 }

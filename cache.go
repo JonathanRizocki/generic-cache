@@ -1,4 +1,4 @@
-package cache
+package main
 
 // Cache is a key-value storage.
 type Cache[K comparable, V any] struct {
