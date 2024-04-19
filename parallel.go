@@ -1,51 +1,80 @@
-package main
+package cache
 
-import (
-	"fmt"
-	"strconv"
-	"sync"
-	"time"
-)
+// package main
 
-func printEverySecond(msg string) {
-	for i := 0; i < 10; i++ {
-		fmt.Println(msg)
-		time.Sleep(time.Second)
-	}
-}
+// import (
+// 	"fmt"
+// 	"strconv"
+// 	"sync"
+// 	"time"
 
-func main() {
-	// Run two goroutines
-	for i := 0; i < 3; i++ {
+// 	"golang.org/x/sync/errgroup"
+// )
 
-		go printEverySecond("Hello" + strconv.Itoa(i+4))
-		go printEverySecond("world" + strconv.Itoa(i+11))
-	}
+// func printEverySecond(msg string) {
+// 	for i := 0; i < 10; i++ {
+// 		fmt.Println(msg)
+// 		time.Sleep(time.Second)
+// 	}
+// }
 
-	var input string
-	fmt.Scanln(&input)
+// func main() {
+// 	// Run two goroutines
+// 	for i := 0; i < 1; i++ {
+// 		go printEverySecond("Hello" + strconv.Itoa(i+4))
+// 		go printEverySecond("world" + strconv.Itoa(i+11))
+// 	}
 
-	cookRecipe()
-}
+// 	var input string
+// 	fmt.Scanln(&input)
 
-func cookRecipe() {
-	wg := &sync.WaitGroup{}
-	wg.Add(2)
+// 	cookRecipe()
+// 	cookRecipe2()
+// }
 
-	go cookRice(wg)
-	go cookCurry(wg)
+// func cookRecipe2() {
+// 	var g errgroup.Group
+// 	g.SetLimit(2)
 
-	wg.Wait()
-}
+// 	g.Go(func() error {
+// 		cookRice2()
+// 		return nil
+// 	})
+// 	g.Go(cookCurry2)
 
-func cookRice(wg *sync.WaitGroup) {
-	defer wg.Done()
-	fmt.Println("Cooking rice...")
-	// prep rice
-}
+// 	err := g.Wait()
+// 	if err != nil {
+// 		fmt.Printf("error %v", err)
+// 	}
+// }
 
-func cookCurry(wg *sync.WaitGroup) {
-	defer wg.Done()
-	fmt.Println("Cooking curry...")
-	// prep curry
-}
+// func cookRice2() {
+// 	fmt.Println("Cooking rice2...")
+// }
+
+// func cookCurry2() error {
+// 	fmt.Println("Cooking curry2...")
+// 	return nil
+// }
+
+// func cookRecipe() {
+// 	wg := &sync.WaitGroup{}
+// 	wg.Add(2)
+
+// 	go cookRice(wg)
+// 	go cookCurry(wg)
+
+// 	wg.Wait()
+// }
+
+// func cookRice(wg *sync.WaitGroup) {
+// 	defer wg.Done()
+// 	fmt.Println("Cooking rice...")
+// 	// prep rice
+// }
+
+// func cookCurry(wg *sync.WaitGroup) {
+// 	defer wg.Done()
+// 	fmt.Println("Cooking curry...")
+// 	// prep curry
+// }
