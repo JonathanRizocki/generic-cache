@@ -1,15 +1,18 @@
 package cache
 
 import (
+	"slices"
 	"sync"
 	"time"
 )
 
 // Cache is a key-value storage.
 type Cache[K comparable, V any] struct {
-	ttl  time.Duration
-	data map[K]entryWithTimeout[V]
-	mu   sync.Mutex
+	maxSize           int
+	ttl               time.Duration
+	data              map[K]entryWithTimeout[V]
+	mu                sync.Mutex
+	chronologicalKeys []K
 }
 
 type entryWithTimeout[V any] struct {
@@ -18,10 +21,12 @@ type entryWithTimeout[V any] struct {
 }
 
 // New creates a usable cache
-func New[K comparable, V any](ttl time.Duration) Cache[K, V] {
+func New[K comparable, V any](maxSize int, ttl time.Duration) Cache[K, V] {
 	return Cache[K, V]{
-		ttl:  ttl,
-		data: make(map[K]entryWithTimeout[V]),
+		ttl:               ttl,
+		data:              make(map[K]entryWithTimeout[V]),
+		chronologicalKeys: make([]K, 0, maxSize),
+		maxSize:           maxSize,
 	}
 }
 
@@ -38,7 +43,7 @@ func (c *Cache[K, V]) Read(key K) (V, bool) {
 	case !found:
 		return zeroV, false
 	case val.expires.Before(time.Now()):
-		delete(c.data, key)
+		c.deleteKeyValue(key)
 		return zeroV, false
 	default:
 		return val.value, true
@@ -49,10 +54,16 @@ func (c *Cache[K, V]) Upsert(key K, val V) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.data[key] = entryWithTimeout[V]{
-		value:   val,
-		expires: time.Now().Add(c.ttl),
+	_, alreadyPresent := c.data[key]
+
+	switch {
+	case alreadyPresent:
+		c.deleteKeyValue(key)
+	case len(c.data) == c.maxSize:
+		c.deleteKeyValue(c.chronologicalKeys[0])
 	}
+
+	c.addKeyValue(key, val)
 
 	// Do not return an error yet.
 	// It can happen in the future.
@@ -62,5 +73,18 @@ func (c *Cache[K, V]) Upsert(key K, val V) error {
 func (c *Cache[K, V]) Delete(key K) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	c.deleteKeyValue(key)
+}
+
+func (c *Cache[K, V]) addKeyValue(key K, val V) {
+	c.data[key] = entryWithTimeout[V]{
+		value:   val,
+		expires: time.Now().Add(c.ttl),
+	}
+	c.chronologicalKeys = append(c.chronologicalKeys, key)
+}
+
+func (c *Cache[K, V]) deleteKeyValue(key K) {
+	c.chronologicalKeys = slices.DeleteFunc(c.chronologicalKeys, func(k K) bool { return k == key })
 	delete(c.data, key)
 }
